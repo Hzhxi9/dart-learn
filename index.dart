@@ -1,3 +1,5 @@
+import 'dart:io';
+
 /**
  * 每个应用都有一个 main() 函数
  **/
@@ -62,6 +64,10 @@ void main() {
 
   var voyager3 = Spacecraft.unlaunched('Voyager III');
   voyager3.describe();
+
+  printWithDelay('delay 1s');
+
+  printWithDelay1('delay 1s again');
 }
 
 /**类 */
@@ -116,4 +122,61 @@ mixin Piloted {
 /**使用 Mixin 的方式继承这个类就可将该类中的功能添加给其它类 */
 class PilotedCraft extends Spacecraft with Piloted {
   PilotedCraft(String name, DateTime launchDate) : super(name, launchDate);
+}
+
+/**
+ * 抽象类
+ * 被任意具体类扩展（或实现）的抽象类
+ * 抽象类可以包含抽象方法（不含方法体的方法）
+ */
+abstract class Describable {
+  void describe();
+
+  void describeWithEmphasis() {
+    print('=======start=======');
+    describe();
+    print('=======end=======');
+  }
+}
+
+/**
+ * 异步
+ */
+const oneSecond = Duration(seconds: 1);
+
+/**使用 async/await 关键字增加代码可读性 */
+Future<void> printWithDelay(String message) async {
+  await Future.delayed(oneSecond);
+  print(message);
+}
+
+/** then  */
+Future<void> printWithDelay1(String message) {
+  return Future.delayed(oneSecond).then((_) => print(message));
+}
+
+/**处理本地文件 async/await */
+Future<void> createDescriptions(Iterable<String> objects) async {
+  for (final object in objects) {
+    try {
+      var file = File('$object.txt');
+      if (await file.exists()) {
+        var modified = await file.lastModified();
+        print('File for $object already exists. It was modified on $modified.');
+        continue;
+      }
+      await file.create();
+      await file.writeAsString('Start describing $object in this file.');
+    } on IOException catch (e) {
+      print('Cannot create description for $object: $e');
+    }
+  }
+}
+
+/**async* 关键字 */
+Stream<String> report(Spacecraft craft, Iterable<String> objects) async* {
+  for (final object in objects) {
+    await Future.delayed(oneSecond);
+    yield '${craft.name} files by $object';
+  }
 }
